@@ -19,8 +19,17 @@ struct ContentView: View {
                         discovery.scanning ? discovery.stop() : discovery.start()
                     }
                     ForEach(discovery.found) { d in
-                        Button("\(d.name) — \(d.host):\(String(d.port))") { model.use(d) }
+                        Button("\(d.name.prefix(8))… — \(d.host):\(String(d.port))") { model.use(d) }
                     }
+                    if !discovery.found.isEmpty {
+                        Button("Try all found (\(discovery.found.count))") { model.tryAll(discovery.found) }
+                            .disabled(model.busy)
+                    }
+                }
+                Section("SideJIT server (SideJITServer-compatible)") {
+                    Toggle("Run server on port 8080", isOn: Binding(
+                        get: { model.serverOn }, set: { model.toggleServer($0) }))
+                    if model.serverOn { Text(model.serverInfo).font(.footnote) }
                 }
                 Section("Pairing") {
                     Text(model.hasPairing ? "pairing file present" : "none yet — a PIN pairing runs on first connect")
@@ -52,6 +61,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("JITRemote")
+            .onAppear { model.discovery = discovery }
         }
         .sheet(isPresented: $importing) {
             DocumentPicker(
