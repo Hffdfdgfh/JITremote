@@ -150,6 +150,9 @@ final class RemoteJIT {
     // MARK: Tunnel
 
     private func makeTunnel() throws -> Tunnel {
+        if let reason = EndpointProbe.failureReason(address: config.host, port: config.port, timeout: 5) {
+            throw RemoteError.message("Can't reach \(config.host):\(config.port): \(reason) Use Scan network to find the real remotepairing port, and make sure Local Network access is allowed for this app.")
+        }
         var pairing: OpaquePointer?
         if FileManager.default.fileExists(atPath: config.pairingPath) {
             try IdeviceFFI.check("failed to read pairing file") {
