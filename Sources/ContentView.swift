@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject private var model = Model()
     @StateObject private var discovery = Discovery()
     @State private var importing = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -52,8 +53,14 @@ struct ContentView: View {
             }
             .navigationTitle("JITRemote")
         }
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.data, .propertyList]) { result in
-            if let url = try? result.get() { model.importPairing(from: url) }
+        .sheet(isPresented: $importing) {
+            DocumentPicker(
+                onPick: { url in model.importPairing(from: url); importing = false },
+                onCancel: { importing = false })
+            .ignoresSafeArea()
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active { model.refreshPairing() }
         }
         .alert("Enter PIN shown on target", isPresented: $model.needPin) {
             TextField("PIN", text: $model.pin).keyboardType(.numberPad)

@@ -27,7 +27,17 @@ final class Model: ObservableObject {
         refreshPairing()
     }
 
-    func refreshPairing() { hasPairing = FileManager.default.fileExists(atPath: Self.pairingURL.path) }
+    func refreshPairing() {
+        let fm = FileManager.default
+        let docs = Self.pairingURL.deletingLastPathComponent()
+        if !fm.fileExists(atPath: Self.pairingURL.path),
+           let found = (try? fm.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil))?
+                .first(where: { $0.pathExtension.lowercased() == "plist" }) {
+            try? fm.moveItem(at: found, to: Self.pairingURL)
+            add("adopted \(found.lastPathComponent) as pairing file")
+        }
+        hasPairing = fm.fileExists(atPath: Self.pairingURL.path)
+    }
 
     func add(_ line: String) { log.append(line); if log.count > 200 { log.removeFirst() } }
 
